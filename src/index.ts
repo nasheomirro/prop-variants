@@ -20,7 +20,7 @@ export function map<T extends Variants>(options: T, props: any): { [K in keyof T
     } else if (Object.prototype.hasOwnProperty.call(options[key], "$")) {
       // if props doesn't have it, use the fallback key in '$'
       const fbKey = options[key]["$"];
-      _props[key] = options[fbKey];
+      _props[key] = options[key][fbKey];
     } else {
       // if props does not hold the key and no fallback was found, throw an error
       throw new Error(`value for ${key} has not been provided and does not have a fallback`);
