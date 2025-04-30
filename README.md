@@ -1,13 +1,13 @@
 # prop-variants
 
-Organize your "variant-like" props a little cleaner.
+A small, mostly "types-only" package that organizes the way you make your prop variants.
 
 - ✅ Just types, no runtime stuff
 - ✅ Flexible APIs
 - ✅ Framework agnostic, it's just props really
 - 🗺️ Optional utility for easier mapping
 
-## Core Concept
+## What it solves
 
 This package aims to provide organization and type-safety when dealing with "variant-like" props. These are props that map to a certain value from a list of keys. A typical example would be a `Button` component that has a `size` prop that is of type `"sm" | "base" | "lg"`:
 
@@ -84,11 +84,11 @@ type _ = {
 };
 ```
 
-The `VariantMap` type above accepts a variant object and spits out each variant groups' keys, this would be then used as the component's props.
+The `VariantMap` type above accepts a variant object and spits out each variant groups' keys, this would be then used to set the component's props!
 
 ### Creating Optional Props
 
-Notice how the `size` above was optional? Well that's because in a variant group we can specify a fallback key using `"$$"`:
+Notice how the `size` property was optional? Well that's because in a variant group we can specify a fallback key using `"$$"`:
 
 ```ts
 const variants = {
@@ -106,9 +106,9 @@ type _ = {
 };
 ```
 
-If the `"$$"` is present in a variant group, it means that the variant will default to the specified key. In this case, the default for the variant group `size` is `base`.
+If the `"$$"` is present in a variant group, it means that the variant will default to the specified key. In this case, the default for the variant group `size` is `base`. Because the variant group has a default key, `VariantMap<T>` assumes that it is optional.
 
-Note that right now this is all just typings, we do offer a utility function to help map the props into values but if you don't use that then you'll have to map it manually with this in mind.
+❗ Note that right now this is all just typings, we do offer a utility function to help map the props into values but if you don't use that then you'll have to map it manually with this in mind.
 
 ### Optional Props with no defaults
 
