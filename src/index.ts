@@ -35,7 +35,8 @@ export type VariantProps<T extends VariantObj, P extends any> = P & VariantMap<T
 export type VariantValueMap<T extends VariantObj> = { [K in keyof T]: T[K][Exclude<keyof T[K], "$$">] | FallbackNull<T[K]> };
 
 /** uses `props` which contains a mapping of variants to spit out the correct value for the given variant */
-export function map<T extends VariantObj, P extends VariantMap<T>>(options: T, props: P): VariantValueMap<T> {
+export function map<T extends VariantObj, P extends VariantMap<T>>(options: T, props: P): VariantValueMap<T>;
+export function map<T extends VariantObj, P extends { [K: string]: any }>(options: T, props: P): VariantValueMap<T> {
   let _props: any = {};
   for (let key of Object.keys(options)) {
     if (Object.prototype.hasOwnProperty.call(props, key)) {
