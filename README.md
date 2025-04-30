@@ -2,14 +2,61 @@
 
 Organize your "variant-like" props a little cleaner.
 
-- ✅ No runtime shenanigans
+- ✅ Just types, no runtime stuff
 - ✅ Flexible APIs
-- ✅ Framework agnostic
+- ✅ Framework agnostic, it's just props really
 - 🗺️ Optional utility for easier mapping
+
+## Core Concept
+
+This package aims to provide organization and type-safety when dealing with "variant-like" props. These are props that map to a certain value from a list of keys. A typical example would be a `Button` component that has a `size` prop that is of type `"sm" | "base" | "lg"`:
+
+```svelte
+<Button size="base" />
+```
+
+Now what we'd normally do is inline it someway, or if you're fancy you would use an object.
+
+```svelte
+<button class="{size === "sm" && "text-sm"} {size === "base" && "text-base"} {size === "lg" && "text-lg"}">
+  <!-- ... -->
+</button>
+
+<button class="{sizes[size]}">
+  <!-- ... -->
+</button>
+```
+
+But things become a bit messy when we need to provide type safety, we'd need to make sure that the props map correctly to the object or inline key, and if we want to provide a default value when we want the prop to be optional, we'd need to modify the prop type and make sure that the places where we use the variant uses the default value.
+
+`prop-variants` aims to solve this small issue by restricting your variants to a slightly-opinionated format:
+
+```ts
+// place your variants into an object
+const variants = {
+  size: {
+    sm: "text-sm",
+    base: "text-base",
+    lg: "text-lg",
+  },
+  theme: {
+    $$: "primary", // define a fallback key if no value is provided
+    primary: "text-primary-500",
+    secondary: "text-secondary-500",
+  },
+  behavior: {
+    debounce: () => _debounce(/* ... */),
+    throttle: () => _throttle(/* ... */),
+    instant: () => _instant(/* ... */),
+  },
+};
+```
+
+`prop-variants` provides types and utilities that work with this format to organize and smoothly work with variant-like props 🎂
 
 ## How to Use
 
-The root of all this is creating the type for the props depending on your variants:
+With the format, we could then get the prop types with `VariantMap<T>`:
 
 ```ts
 import { type VariantMap } from "prop-variants";
@@ -37,11 +84,11 @@ type _ = {
 };
 ```
 
-The `VariantMap` type above accepts a variant object and spits out each variant groups' keys. The variant groups in this context are `variants.theme` and `variants.size`, and a variant object just means an object which holds variant groups (the object is `variants` in this case).
+The `VariantMap` type above accepts a variant object and spits out each variant groups' keys, this would be then used as the component's props.
 
 ### Creating Optional Props
 
-Notice how the `size` above was actually optional? Well that's because in a variant group we can specify a fallback key using `"$$"`:
+Notice how the `size` above was optional? Well that's because in a variant group we can specify a fallback key using `"$$"`:
 
 ```ts
 const variants = {
@@ -59,7 +106,9 @@ type _ = {
 };
 ```
 
-If the `"$$"` is present in a variant group, it means that the variant will default to the specified key. In this case, the default for the variant group `size` is `base`. Note that right now this is all just typings, we do offer a utility function to help map the props into values but if you don't use that then you'll have to make this work manually.
+If the `"$$"` is present in a variant group, it means that the variant will default to the specified key. In this case, the default for the variant group `size` is `base`.
+
+Note that right now this is all just typings, we do offer a utility function to help map the props into values but if you don't use that then you'll have to map it manually with this in mind.
 
 ### Optional Props with no defaults
 
@@ -118,7 +167,7 @@ Note that you can shape them however you please but it's probably good practice 
 
 ### Mapping The Props to their Variants
 
-So far, we only talked about how `VariantMap` makes your variant object into prop types. Now lets see how we can convert the given props to their actual values. And how we'll do that is through the `map` fn:
+So far, we only talked about how `VariantMap` makes your variant object into prop types. Now lets see how we can use the given props to map to the variant's values. And how we'll do that is through the `map()` fn:
 
 ```ts
 import { map } from "prop-variants";
@@ -167,11 +216,11 @@ console.log(theme); // "text-primary-500"
 console.log(behavior); // undefined
 ```
 
-The `map` fn takes your variants and uses your props as a "map" to then spit out the correctly typed variant values. It also uses the default `"$$"` if a variant isn't present, and if `"$$"` is null, it spits out `undefined`.
+The `map` fn takes your variants and uses your props as a "map" to then spit out the correctly typed variant values. It also uses the default key in `"$$"` if a variant isn't present, and if `"$$"` is null, it spits out `undefined`.
 
 ### Not using the map function
 
-The map function is called at runtime and some people understandably will not like that. However, the map function isn't the primary  focus of the package but instead it's its types. You shouldn't have any trouble manually mapping the variants, and the whole process should be type-safe:
+The map function is called at runtime and some people understandably will not like that. However, the map function isn't the primary focus of the package but instead it's its types. You shouldn't have any trouble manually mapping the variants, and the whole process should be type-safe:
 
 ```ts
 // imagine we got this from the consumer
@@ -181,19 +230,21 @@ const props: VariantMap<typeof variants> = {
 
 // Remember, `size` and `behavior` won't cause type errors because
 // in the proper context, props is of type `VariantProps<...>`
-const { size, theme, behavior } = props;
+const {
+  size, // string | undefined
+  theme, // string
+  behavior, // string | undefined
+} = props;
 
-console.log(variants.size[size || "base"]); // "text-base" <--- inline substitute
+console.log(variants.size[size || "base"]); // "text-base" <--- inline fall back
 console.log(variants.size[size || variants.size["$$"]]); // "text-base" <--- uses fall back key
 console.log(variants.theme[theme]); // "text-primary-500"
 console.log(variants.behavior[behavior || "$$"]); // undefined
 ```
 
-For any defaults, just use the wanted default key directly like the first example for `variants.size` above. for no defaults but still optional you can set `"$$"` to `undefined` and use that key instead like `variants.behavior` above.
-
 ### Using `Props` to type a variant object
 
-In each example so far we got the type for our props using `VariantMap<typeof variants>`, but what if your `variants` object is defined somewhere where you can't do this? At this point, you can instead create your own prop types and use that as a way to build your `variants` object, essentially reversing the process:
+In each example so far we got the type for our props using `VariantMap<typeof variants>`, but what if your `variants` object is defined somewhere where you can't do this? Well you can instead create your own prop types and use that as a way to build your `variants` object, basically doing the reverse:
 
 ```ts
 import { type Variants } from "prop-variants";
@@ -209,7 +260,7 @@ const variants = {
     secondary: "",
   },
   size: {
-    $$: "base", // because variant group was a partial, it complains when `$$` is missing or incorrect
+    $$: "base", // because `size` was optional, it complains when `$$` is missing or incorrect
     sm: "",
     base: "",
     lg: "",
@@ -301,6 +352,8 @@ export const Button: FC<Props> = ({ children, ...props }) => {
 
 ## Good to knows
 
+### map function doesn't need strict props
+
 When using the map function, you do not have to explicitly make sure that the props only hold variant keys:
 
 ```tsx
@@ -322,3 +375,28 @@ const { theme } = map(variants, props); // still works!
 ```
 
 `map()` doesn't modify the given props or variants, and won't care about any other properties.
+
+### using multiple variant objects
+
+It should be possible to use multiple variants in a single component:
+
+```tsx
+const fieldVariants = {
+  /* ... */
+};
+const buttonVariants = {
+  /* ... */
+};
+
+// this works as intended
+type Props = VariantMap<typeof filedVariants> & VariantMap<typeof buttonVariants>;
+```
+
+and if you're using the `map` function, just do it separately:
+
+```ts
+const fieldVariantValues = map(fieldVariants, props);
+const buttonVariantValues = map(buttonVariants, props);
+```
+
+Just make sure that each variant object doesn't have the same keys.
