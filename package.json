@@ -1,6 +1,6 @@
 {
   "name": "prop-variants",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "scripts": {
     "build": "tsc -p tsconfig.cjs.json && tsc -p tsconfig.esm.json",
@@ -14,9 +14,25 @@
     "import": "./dist/esm/index.js",
     "require": "./dist/cjs/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "variants",
+    "props",
+    "classes",
+    "map"
+  ],
+  "files": [
+    "dist/"
+  ],
+  "author": "nasheomirro",
   "license": "MIT",
+  "homepage": "https://github.com/nasheomirro/prop-variants#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasheomirro/prop-variants.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nasheomirro/prop-variants/issues"
+  },
   "packageManager": "pnpm@10.8.1",
   "devDependencies": {
     "@changesets/cli": "^2.29.2",

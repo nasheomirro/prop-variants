@@ -1,5 +1,5 @@
-type AnyObject = { [K: string]: any };
-type VariantGroup = { [K: string]: AnyObject };
+export type AnyObject = { [K: string]: any };
+export type VariantGroup = { [K: string]: AnyObject };
 
 /**
  * Checks if type is an actual string instance `(ex. "foo" | "bar" | "baz")` and not just `string`.
