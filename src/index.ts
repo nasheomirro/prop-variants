@@ -1,56 +1,105 @@
-type VariantGroup = { [k: string]: any };
-type VariantObj = { [k: string]: VariantGroup };
-
-/** Spits out the keys that have fallbacks */
-type FallbackKey<T extends VariantObj, K extends keyof T = keyof T> = K extends any ? ("$$" extends keyof T[K] ? K : never) : never;
-
-/** Removes any key that has a fallback */
-type RequiredKeys<T extends VariantObj> = Exclude<keyof T, FallbackKey<T>>;
-
-/** Returns undefined if fallback of `VariantGroup` is null */
-type FallbackNull<T extends VariantGroup> = "$$" extends keyof T ? (T["$$"] extends null | undefined ? undefined : never) : never;
+type AnyObject = { [K: string]: any };
+type VariantGroup = { [K: string]: AnyObject };
 
 /**
- * Converts a variant map back to it's variant object representation.
- *
- * Note that if you wish to type an object with
- * `Variants<T>`, you should do so using the `satisfies` keyword. This is because `Variants<T>` does not save the
- * variant values' types.
+ * Checks if type is an actual string instance `(ex. "foo" | "bar" | "baz")` and not just `string`.
  */
-export type Variants<T extends { [k: string]: string }> = {
-  [K in keyof T]-?: {
-    [L in Exclude<T[K], undefined> | (undefined extends T[K] ? "$$" : never)]: L extends "$$" ? T[K] | undefined | null : any;
+type IsStringInstance<T, K> = [T] extends [string] ? (string extends T ? never : K) : never;
+
+/**
+ * Determines the keys that are valid to be used in constructing variant groups
+ */
+type GetVariantKeys<T extends AnyObject, K extends keyof T = keyof T> = K extends any
+  ? IsStringInstance<Exclude<T[K], undefined>, K>
+  : never;
+
+/**
+ * Returns only the list of variants that have a default key
+ */
+type GetVariantsWithDef<T extends VariantGroup, D extends string, K extends keyof T = keyof T> = K extends any
+  ? D extends keyof T[K]
+    ? K
+    : never
+  : never;
+
+/**
+ * Returns only the list of variants that have a default key that is `null` or `undefined`
+ */
+type GetVariantsWithDefNull<T extends VariantGroup, D extends string, K extends keyof T = keyof T> = K extends any
+  ? D extends keyof T[K]
+    ? T[K][D] extends null | undefined
+      ? K
+      : never
+    : never
+  : never;
+
+/**
+ * From `T`, tries it's best to determine which are variants and returns a variant group based on it.
+ *
+ * Always use the `satisfies` keyword instead of directly typing or asserting this to your object.
+ */
+export type ToVariants<T extends AnyObject, D extends string = "$def"> = {
+  [K in GetVariantKeys<T>]-?: {
+    [L in Exclude<T[K], undefined>]: any;
+  } & (undefined extends T[K]
+    ? {
+        [L in D]?: T[K] | undefined | null;
+      }
+    : {});
+};
+
+/**
+ * Constructs a set of key-value pairs using the structure of `T`.
+ *
+ * You must be explicit with your use of `D` in `T` to correctly signal that the key should be optional.
+ */
+export type ToKeyMap<T extends VariantGroup, D extends string = "$def"> = {
+  [L in GetVariantsWithDef<T, D>]?: Exclude<keyof T[L], D>;
+} & {
+  [L in Exclude<keyof T, GetVariantsWithDef<T, D>>]: Exclude<keyof T[L], D>;
+};
+
+/**
+ * Like `ToKeyMap` but instead of giving keys for each variant, it gives you the values that they might have.
+ */
+export type ToValueMap<T extends VariantGroup, D extends string = "$def"> = {
+  [K in keyof T]: T[K][Exclude<keyof T[K], D>] | (K extends GetVariantsWithDef<T, D> ? undefined : never);
+};
+
+/**
+ * Like `ToValueMap` but the values assume that default key would be used if value could be `undefined`, if
+ * default is null, it remains `undefined`.
+ */
+export type ToCompedValueMap<T extends VariantGroup, D extends string = "$def"> = {
+  [K in keyof T]: T[K][Exclude<keyof T[K], D>] | (K extends GetVariantsWithDefNull<T, D> ? undefined : never);
+};
+
+/**
+ * From `T`, tries it's best to determine which are variants and returns a variant group based on it. Does not have
+ * default keys.
+ *
+ * Always use the `satisfies` keyword instead of directly typing or asserting this to your object.
+ */
+export type ToBasicVariants<T extends AnyObject> = {
+  [K in GetVariantKeys<T>]-?: {
+    [L in Exclude<T[K], undefined>]: any;
   };
 };
 
-/** Converts variant objects into their prop counterparts */
-export type VariantMap<T extends VariantObj> = { [K in FallbackKey<T>]?: Exclude<keyof T[K], "$$"> } & {
-  [K in RequiredKeys<T>]: keyof T[K];
-};
+/**
+ * Constructs a set of key-value pairs using the structure of `T`.
+ *
+ * Because we don't use default keys, you could instead provide a list of variants you want to be optional.
+ */
+export type ToBasicKeyMap<T extends VariantGroup, Optional extends keyof T = never> = {
+  [K in Exclude<keyof T, Optional>]: keyof T[K];
+} & (Optional extends keyof T ? { [K in Optional]?: keyof T[K] | undefined } : never);
 
-/** Converts variant objects into their prop counterparts */
-export type VariantProps<T extends VariantObj, P extends any> = P & VariantMap<T>;
-
-/** Gives the mapping of values from a variant object */
-export type VariantValueMap<T extends VariantObj> = { [K in keyof T]: T[K][Exclude<keyof T[K], "$$">] | FallbackNull<T[K]> };
-
-/** uses `props` which contains a mapping of variants to spit out the correct value for the given variant */
-export function map<T extends VariantObj, P extends VariantMap<T>>(options: T, props: P): VariantValueMap<T>;
-export function map<T extends VariantObj, P extends { [K: string]: any }>(options: T, props: P): VariantValueMap<T> {
-  let _props: any = {};
-  for (let key of Object.keys(options)) {
-    if (Object.prototype.hasOwnProperty.call(props, key)) {
-      // if props has a key, use that key to determine which value should be mapped
-      _props[key] = options[key][props[key]];
-    } else if (Object.prototype.hasOwnProperty.call(options[key], "$$")) {
-      // if props doesn't have it, use the fallback key in '$$'
-      const fbKey = options[key]["$$"];
-      _props[key] = options[key][fbKey];
-    } else {
-      // if props does not hold the key and no fallback was found, throw an error
-      throw new Error(`value for $${key} has not been provided and does not have a fallback`);
-    }
-  }
-
-  return _props;
-}
+/**
+ * Like `ToKeyMap` but instead of giving keys for each variant, it gives you the values that they might have.
+ *
+ * Because we don't use default keys, you could instead provide a list of variants that could be `undefined`
+ */
+export type ToBasicValueMap<T extends VariantGroup, Optional extends keyof T = never> = {
+  [K in Exclude<keyof T, Optional>]: T[K][keyof T[K]];
+} & (Optional extends keyof T ? { [K in Optional]: T[K][keyof T[K]] | undefined } : never);
