@@ -1,7 +1,7 @@
 {
   "name": "prop-variants",
-  "version": "0.2.0",
-  "description": "",
+  "version": "0.3.0",
+  "description": "utility types that helps you deal with exposing variants through props",
   "scripts": {
     "build": "pnpm test && pnpm build:cjs && pnpm build:esm",
     "build:cjs": "tsc -p tsconfig.cjs.json",

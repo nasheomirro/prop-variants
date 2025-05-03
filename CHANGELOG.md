@@ -1,5 +1,20 @@
 # prop-variants
 
+## 0.3.0
+
+### Minor Changes
+
+- 01f1189: Breaking changes:
+
+  - Removed the `$def` property
+  - `ToVariants`, `ToKeyMap`, and `ToValueMap` now all function like their `basic` counterparts
+  - Removed `basic` types and moved them to their core counterparts
+    `Removed`ToCompedValueMap`
+
+### Patch Changes
+
+- Modified README.md
+
 ## 0.2.0
 
 ### Minor Changes
