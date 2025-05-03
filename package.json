@@ -1,18 +1,13 @@
 {
   "name": "prop-variants",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "utility types that helps you deal with exposing variants through props",
   "scripts": {
-    "build": "pnpm test && pnpm build:cjs && pnpm build:esm",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:esm": "tsc -p tsconfig.esm.json"
+    "build": "tsc"
   },
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
   "exports": {
-    "import": "./dist/esm/index.js",
-    "require": "./dist/cjs/index.js"
+    "types": "./dist/index.d.ts"
   },
   "keywords": [
     "variants",

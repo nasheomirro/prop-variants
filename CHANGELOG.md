@@ -1,5 +1,11 @@
 # prop-variants
 
+## 0.3.1
+
+### Patch Changes
+
+- Removed cjs and esm exports, we only export types now
+
 ## 0.3.0
 
 ### Minor Changes
