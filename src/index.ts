@@ -1,5 +1,5 @@
-type AnyObject = { [K: string]: any };
-type VariantGroup = { [K: string]: AnyObject };
+export type AnyObject = Record<string, any>;
+export type VariantGroup = Record<string, AnyObject>;
 
 /**
  * Checks if type is an actual string instance `(ex. "foo" | "bar" | "baz")` and not just `string`.
@@ -52,3 +52,15 @@ export type ToKeyMap<T extends VariantGroup, Optional extends keyof T = never> =
 export type ToValueMap<T extends VariantGroup, Optional extends keyof T = never> = {
   [K in Exclude<keyof T, Optional | undefined>]: T[K][keyof T[K]];
 } & ([Optional] extends [keyof T] ? { [K in Exclude<Optional, undefined>]: T[K][keyof T[K]] | undefined } : {});
+
+/**
+ * Like `ToValueMap`, it grabs all the value types of all the variants, and spits them out as an array.
+ *
+ * Because we don't have an intrinsic way to tell if a variant is optional,
+ * you could instead provide a boolean to say that "yes some variants are optional".
+ */
+export type ToValueArray<T extends VariantGroup, IsOptional extends true = never> = keyof T extends infer K
+  ? K extends keyof T
+    ? (T[K][keyof T[K]] | (true extends IsOptional ? undefined : never))[]
+    : never
+  : never;

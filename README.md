@@ -144,3 +144,59 @@ type Props = {
 The `Props` should now automatically update when variants changes. Note that for optional props we need to manually tell `ToKeyMap` which variant should become optional, this is because `ToKeyMap` has no way to know just from `typeof variants`.
 
 This is useful but this leaves `variants` untyped, because of this it might be better to still use `ToVariants` instead.
+
+## Recipes
+
+Some functions that might be helpful in certain conditions. Currently, the package does not contain any of these functions so if you want to use them you'll have to declare them yourself.
+
+### `map()` function
+
+Say you wanted to grab from the props the values for the variants, here's a function to do just that:
+
+```ts
+import type { AnyObject, VariantGroup, ToVariants, ToValueMap, GetOptionalKeys } from "prop-variants";
+
+function map<P extends AnyObject, T extends ToVariants<P> = ToVariants<P>>(
+  props: P,
+  variants: T
+): ToValueMap<T, GetOptionalKeys<P> extends keyof T ? GetOptionalKeys<P> : never>;
+function map<P extends AnyObject, T extends VariantGroup>(props: P, variants: T): AnyObject {
+  const values: AnyObject = {};
+  for (let key of Object.keys(variants) as any[]) {
+    if (Object.prototype.hasOwnProperty.call(props, key)) {
+      values[key] = variants[key][props[key]];
+    } else {
+      values[key] = undefined;
+    }
+  }
+
+  return values;
+}
+```
+
+This would return the computed values for every variant inside the given `variants` object depending on the given `props`. Note that you do not have to "clean" your props for this, just like `ToVariants` it will ignore anything that isn't a variant.
+
+### `values()` function
+
+Similar to the `map` function, will grab from the props the values for the variants, but instead of an object it would just be an array of values. This is useful in tandem with `clsx`. Note that the order of the values are random, so keep that in mind if you are using `tailwind-merge`.
+
+```ts
+import type { AnyObject, VariantGroup, ToVariants, ToValueArray } from "prop-variants";
+
+function values<P extends AnyObject, T extends ToVariants<P> = ToVariants<P>>(
+  props: P,
+  variants: T
+): ToValueArray<T, undefined extends P[keyof P] ? true : never>;
+function values<P extends AnyObject, T extends VariantGroup>(props: P, variants: T): any[] {
+  const values = [];
+  for (let key of Object.keys(variants) as any[]) {
+    if (Object.prototype.hasOwnProperty.call(props, key)) {
+      values.push(variants[key][props[key]]);
+    } else {
+      values.push(undefined);
+    }
+  }
+
+  return values;
+}
+```

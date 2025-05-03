@@ -1,5 +1,17 @@
 # prop-variants
 
+## 0.4.0
+
+### Minor Changes
+
+- - Exposed the `AnyObject` type
+  - Exposed the `VariantGroup` type
+  - Created `ToValueArray` type
+
+### Patch Changes
+
+- Modified README.md to include "recipes", utility functions that might be helpful
+
 ## 0.3.1
 
 ### Patch Changes
